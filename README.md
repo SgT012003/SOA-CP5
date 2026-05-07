@@ -18,7 +18,6 @@
 |Docker Compose|1.29+|Docker|
 |Golang|1.25+|Local|
 |Postgres|17+|Local|
-|Swag CLI|1.16+|Local|
 
 ## Execução
 
