@@ -99,3 +99,29 @@ curl -X PATCH http://localhost:8080/api/v1/reservations/{id}/status \
   -H "Content-Type: application/json" \
   -d '{"status": "CANCELED"}'
 ```
+
+## Arquitetura
+
+### Diagrama de Camadas
+
+A aplicação segue uma arquitetura em camadas, separando as responsabilidades de roteamento HTTP, lógica de negócio e persistência de dados.
+
+```mermaid
+graph TD
+    Client[Client / Swagger / cURL] --> Controllers[Controllers / API Handlers]
+    Controllers --> Services[Service Layer / Regras de Negócio]
+    Services --> Repositories[Repository Layer / Acesso a Dados]
+    Repositories --> Database[(PostgreSQL Database)]
+```
+
+### Architecture Decision Records (ADRs)
+
+#### ADR 1: Transição de Status RESTful para Reservas
+* **Contexto:** Ações de mudança de estado para reservas (check-in, check-out, cancelamento) costumam ser modeladas como endpoints imperativos (ex: `POST /checkin`).
+* **Decisão:** Consolidar todas as transições de estado através de atualizações parciais de recursos usando `PATCH /api/v1/reservations/{id}/status` com payload JSON contendo o novo estado.
+* **Consequências:** A API torna-se mais aderente ao padrão RESTful (foco no estado do recurso). A documentação simplifica-se e a validação de ciclo de vida da reserva fica centralizada e consistente.
+
+#### ADR 2: Arquitetura em Camadas (Separation of Concerns)
+* **Contexto:** Sistemas com regras de negócio complexas, como o limite de horas de antecedência para check-in, necessitam de código limpo e testável, sem acoplamento direto com persistência ou frameworks web.
+* **Decisão:** Adotar as camadas `Controller/Handler` para validação de payload/HTTP, `Service` para isolamento de regras de negócio (core logic), e `Repository` para abstração e interação com o banco de dados.
+* **Consequências:** Maior testabilidade via injeção de dependência na camada Service, permitindo mockar os repositórios. O sistema ganha modularidade, facilitando futuras manutenções e evolução tecnológica.
