@@ -1,0 +1,470 @@
+basePath: /api/v1
+definitions:
+  middlewares.ErrorResponse:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+      timestamp:
+        type: string
+    type: object
+  models.CreateGuestRequest:
+    properties:
+      document:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      phone:
+        type: string
+    required:
+    - document
+    - email
+    - full_name
+    - phone
+    type: object
+  models.CreateReservationRequest:
+    properties:
+      checkin_expected:
+        type: string
+      checkout_expected:
+        type: string
+      guest_id:
+        type: string
+      guests_count:
+        minimum: 1
+        type: integer
+      room_id:
+        type: string
+    required:
+    - checkin_expected
+    - checkout_expected
+    - guest_id
+    - guests_count
+    - room_id
+    type: object
+  models.CreateRoomRequest:
+    properties:
+      capacity:
+        minimum: 1
+        type: integer
+      number:
+        type: string
+      price_per_night:
+        type: number
+      type:
+        enum:
+        - STANDARD
+        - DELUXE
+        - SUITE
+        type: string
+    required:
+    - capacity
+    - number
+    - price_per_night
+    - type
+    type: object
+  models.Guest:
+    properties:
+      created_at:
+        type: string
+      document:
+        type: string
+      email:
+        type: string
+      full_name:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+    type: object
+  models.Reservation:
+    properties:
+      checkin_at:
+        type: string
+      checkin_expected:
+        type: string
+      checkout_at:
+        type: string
+      checkout_expected:
+        type: string
+      created_at:
+        type: string
+      estimated_amount:
+        type: number
+      final_amount:
+        type: number
+      guest_id:
+        type: string
+      id:
+        type: string
+      room_id:
+        type: string
+      status:
+        description: CREATED, CHECKED_IN, CHECKED_OUT, CANCELED
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.Room:
+    properties:
+      capacity:
+        type: integer
+      id:
+        type: string
+      number:
+        type: string
+      price_per_night:
+        type: number
+      status:
+        description: ATIVO, INATIVO
+        type: string
+      type:
+        type: string
+    type: object
+  models.UpdateGuestRequest:
+    properties:
+      full_name:
+        type: string
+      phone:
+        type: string
+    required:
+    - full_name
+    - phone
+    type: object
+  models.UpdateReservationStatusRequest:
+    properties:
+      status:
+        enum:
+        - CANCELED
+        - CHECKED_IN
+        - CHECKED_OUT
+        type: string
+    required:
+    - status
+    type: object
+  models.UpdateRoomRequest:
+    properties:
+      capacity:
+        minimum: 1
+        type: integer
+      price_per_night:
+        type: number
+      type:
+        enum:
+        - STANDARD
+        - DELUXE
+        - SUITE
+        type: string
+    required:
+    - capacity
+    - price_per_night
+    - type
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API for managing hotel reservations.
+  title: Hotel Reservation API
+  version: "1.0"
+paths:
+  /guests:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Guest'
+            type: array
+      summary: Lista todos os hóspedes
+      tags:
+      - guests
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dados do Hóspede
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateGuestRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Guest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Cria um hóspede
+      tags:
+      - guests
+  /guests/{id}:
+    delete:
+      parameters:
+      - description: ID do Hóspede
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Remove um hóspede
+      tags:
+      - guests
+    get:
+      parameters:
+      - description: ID do Hóspede
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Guest'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Busca um hóspede por ID
+      tags:
+      - guests
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID do Hóspede
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateGuestRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Guest'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Atualiza um hóspede
+      tags:
+      - guests
+  /reservations:
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova reserva validando disponibilidade e regras de negócio
+      parameters:
+      - description: Dados da Reserva
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateReservationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Reservation'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Cria uma reserva
+      tags:
+      - reservations
+  /reservations/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: 'Realiza transições de status da reserva (ex: CHECKED_IN, CHECKED_OUT,
+        CANCELED)'
+      parameters:
+      - description: ID da Reserva
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Novo Status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateReservationStatusRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Atualiza o status da reserva
+      tags:
+      - reservations
+  /rooms:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Room'
+            type: array
+      summary: Lista todos os quartos ativos
+      tags:
+      - rooms
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Dados do Quarto
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Room'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Cria um quarto
+      tags:
+      - rooms
+  /rooms/{id}:
+    delete:
+      parameters:
+      - description: ID do Quarto
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Inativa um quarto (soft delete)
+      tags:
+      - rooms
+    get:
+      parameters:
+      - description: ID do Quarto
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Room'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Busca um quarto por ID
+      tags:
+      - rooms
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: ID do Quarto
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados para atualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateRoomRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.Room'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/middlewares.ErrorResponse'
+      summary: Atualiza um quarto
+      tags:
+      - rooms
+swagger: "2.0"

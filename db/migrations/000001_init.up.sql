@@ -1,0 +1,32 @@
+CREATE TABLE guests (
+    id CHAR(36) PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    document VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE rooms (
+    id CHAR(36) PRIMARY KEY,
+    number VARCHAR(20) UNIQUE NOT NULL,
+    type VARCHAR(20) NOT NULL CHECK (type IN ('STANDARD', 'DELUXE', 'SUITE')),
+    capacity INT NOT NULL,
+    price_per_night DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'ATIVO' CHECK (status IN ('ATIVO', 'INATIVO'))
+);
+
+CREATE TABLE reservations (
+    id CHAR(36) PRIMARY KEY,
+    guest_id CHAR(36) NOT NULL REFERENCES guests(id),
+    room_id CHAR(36) NOT NULL REFERENCES rooms(id),
+    checkin_expected TIMESTAMP WITH TIME ZONE NOT NULL,
+    checkout_expected TIMESTAMP WITH TIME ZONE NOT NULL,
+    checkin_at TIMESTAMP WITH TIME ZONE,
+    checkout_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) NOT NULL DEFAULT 'CREATED' CHECK (status IN ('CREATED', 'CHECKED_IN', 'CHECKED_OUT', 'CANCELED')),
+    estimated_amount DECIMAL(10, 2) NOT NULL,
+    final_amount DECIMAL(10, 2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
